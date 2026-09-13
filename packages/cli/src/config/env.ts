@@ -24,8 +24,14 @@ export async function loadDotEnvLocal(cwd: string): Promise<Record<string, strin
       .trim()
       .replace(/^export\s+/, '');
     let value = trimmed.slice(eq + 1).trim();
-    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+    const quoted =
+      (value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"));
+    if (quoted) {
       value = value.slice(1, -1);
+    } else {
+      // unquoted values may carry an inline comment: KEY=value # note
+      const hash = value.indexOf(' #');
+      if (hash >= 0) value = value.slice(0, hash).trim();
     }
     if (key.length > 0) values[key] = value;
   }

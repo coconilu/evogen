@@ -119,6 +119,17 @@ export async function runProposals(args: ProposalsArgs): Promise<number> {
         lines.push('  diff:');
         for (const line of preview.diff.split('\n')) lines.push(`    ${line}`);
       }
+      const evidence = run.evidence.filter((item) => expression.evidenceIds.includes(item.id));
+      if (evidence.length > 0) {
+        lines.push('  evidence:');
+        for (const item of evidence) {
+          lines.push(
+            `    [${item.kind}] session ${item.sessionId} (confidence ${item.confidence.toFixed(2)})`,
+          );
+          lines.push(`      “${truncate(item.quote, 160)}”`);
+          lines.push(`      ${truncate(item.note, 160)}`);
+        }
+      }
       lines.push('');
     }
   }

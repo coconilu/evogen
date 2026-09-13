@@ -125,14 +125,29 @@ describe('resolveModelConfig', () => {
 });
 
 describe('loadDotEnvLocal', () => {
-  it('parses comments, quotes and export prefixes', async () => {
+  it('parses comments, quotes, export prefixes and inline comments', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'evogen-env-'));
     await writeFile(
       join(dir, '.env.local'),
-      ['# comment', 'A=1', 'B = "two words"', "export C='three'", 'no_equals_line', ''].join('\n'),
+      [
+        '# comment',
+        'A=1',
+        'B = "two words"',
+        "export C='three'",
+        'URL=https://api.test/v1   # inline note',
+        'KEEP="has # inside quotes"',
+        'no_equals_line',
+        '',
+      ].join('\n'),
       'utf8',
     );
-    expect(await loadDotEnvLocal(dir)).toEqual({ A: '1', B: 'two words', C: 'three' });
+    expect(await loadDotEnvLocal(dir)).toEqual({
+      A: '1',
+      B: 'two words',
+      C: 'three',
+      URL: 'https://api.test/v1',
+      KEEP: 'has # inside quotes',
+    });
   });
 
   it('returns empty when the file is missing', async () => {

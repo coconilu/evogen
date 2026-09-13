@@ -110,18 +110,16 @@ export function createProposeStage(): Stage<readonly Signal[], Proposal> {
       let title = '建议';
       let raw: readonly RawExpression[] = [];
       if (signals.length > 0) {
-        try {
-          const response = await ctx.model.complete({
-            system: SYSTEM,
-            prompt: userPrompt(signals, surfaces),
-            responseFormat: 'json',
-          });
-          const payload = asRecord(extractJson(response.text));
-          title = asString(payload['title']).trim() || title;
-          raw = parseExpressions(payload);
-        } catch {
-          raw = [];
-        }
+        // no swallowing here: a failed propose call is a systemic problem the
+        // caller needs to see, not an empty proposal to wonder about
+        const response = await ctx.model.complete({
+          system: SYSTEM,
+          prompt: userPrompt(signals, surfaces),
+          responseFormat: 'json',
+        });
+        const payload = asRecord(extractJson(response.text));
+        title = asString(payload['title']).trim() || title;
+        raw = parseExpressions(payload);
       }
 
       const validEvidence = (ids: readonly string[]) => ids.filter((id) => knownEvidence.has(id));

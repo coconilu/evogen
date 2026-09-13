@@ -63,8 +63,12 @@ export function createDistillStage(): Stage<readonly RawSession[], readonly Evid
     name: 'distill',
     async run(sessions: readonly RawSession[], ctx: PipelineContext): Promise<readonly Evidence[]> {
       const evidence: Evidence[] = [];
+      let attempted = 0;
+      let failed = 0;
+      let lastError = '';
       for (const session of sessions) {
         const transcript = renderTranscript(session);
+        attempted += 1;
         let payload: unknown;
         try {
           const response = await ctx.model.complete({
@@ -73,7 +77,9 @@ export function createDistillStage(): Stage<readonly RawSession[], readonly Evid
             responseFormat: 'json',
           });
           payload = extractJson(response.text);
-        } catch {
+        } catch (error) {
+          failed += 1;
+          lastError = error instanceof Error ? error.message : String(error);
           continue; // one unreadable session must not sink the run
         }
         for (const raw of parseEvidence(payload, transcript)) {
@@ -86,6 +92,11 @@ export function createDistillStage(): Stage<readonly RawSession[], readonly Evid
             confidence: raw.confidence,
           });
         }
+      }
+      // Every session failing is a systemic problem (bad endpoint, bad key);
+      // staying silent here would hide it behind an empty proposal.
+      if (attempted > 0 && failed === attempted) {
+        throw new Error(`distill failed for all ${attempted} sessions; last error: ${lastError}`);
       }
       return evidence;
     },

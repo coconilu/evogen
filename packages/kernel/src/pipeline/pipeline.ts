@@ -30,6 +30,8 @@ export interface PipelineRun {
   readonly startedAt: string;
   readonly stages: readonly StageRecord[];
   readonly proposal: Proposal | undefined;
+  /** Every distilled evidence item: the audit trail behind the signals. */
+  readonly evidence: readonly Evidence[];
 }
 
 export class KernelNotReadyError extends Error {

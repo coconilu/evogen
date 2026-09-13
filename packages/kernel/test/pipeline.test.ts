@@ -227,4 +227,12 @@ describe('createEvolutionPipeline end to end (fake model)', () => {
     expect(run.proposal?.expressions.length).toBe(1);
     expect(run.proposal?.critique?.notes).toContain('unavailable');
   });
+
+  it('fails loudly when every distill call errors', async () => {
+    // no distill route: the fake model throws for every session
+    const model = fakeModel([PROPOSE_ROUTE, CRITIQUE_OK]);
+    await expect(runEvolution(createEvolutionPipeline(), makeCtx(model))).rejects.toThrow(
+      /distill failed for all 1 sessions/,
+    );
+  });
 });

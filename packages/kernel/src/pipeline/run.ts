@@ -100,5 +100,6 @@ export async function runEvolution(
     startedAt: runStarted.toISOString(),
     stages,
     proposal: critiqued.value,
+    evidence: distilled.value,
   };
 }

@@ -31,9 +31,7 @@
   },
   "plugins": {
     "updater": {
-      "endpoints": [
-        "https://github.com/BayesWang/evogen/releases/latest/download/latest.json"
-      ],
+      "endpoints": ["https://github.com/BayesWang/evogen/releases/latest/download/latest.json"],
       "pubkey": "REPLACE_WITH_MINISIGN_PUBKEY_AT_FIRST_RELEASE"
     }
   }

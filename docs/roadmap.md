@@ -23,7 +23,9 @@ node packages/cli/dist/index.js status
 - 构建通过，`status` 能列出本机可进化面与可读会话数
 - `packages/kernel/package.json` 的 `dependencies` 为空（CI 里已有断言）
 
-## M1 只读闭环
+## M1 只读闭环（已完成，2026-09-13）
+
+验收记录：对 12 个真实会话运行 `evogen proposals`，产出 3 条建议（每条含来源会话、证据引用、理由、风险、置信度；证据 quote 可回溯到会话文件）；运行前后所有可进化面 sha-256 摘要完全一致（零写入）。模型经通用的 chat-completions 兼容端点接入（EVOGEN_MODEL_* 配置）。
 
 交付：
 
