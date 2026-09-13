@@ -1,20 +1,8 @@
-import {
-  createEvolutionPipeline,
-  createMemoryStore,
-  runEvolution,
-  sequentialIds,
-  systemClock,
-  type ModelClient,
-  type ModelResponse,
-  type PipelineContext,
-  type Proposal,
-} from '@evogen/kernel';
 import { createCodexAdapter } from '@evogen/adapter-codex';
-import { renderDiff } from '../diff.js';
-import { ChatCompletionsClient, resolveModelConfig } from '../config/model.js';
-import { FileProposalStore } from '../store/file-proposal-store.js';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import { MissingModelConfigError, openStore, runPipeline } from '../pipeline-runner.js';
+import { buildPreviews, type ExpressionPreview } from '../previews.js';
 
 export interface ProposalsArgs {
   readonly json: boolean;
@@ -25,119 +13,46 @@ export interface ProposalsArgs {
 }
 
 const HARD_SESSION_CAP = 200;
+const STORE_PATH = join(homedir(), '.evogen', 'store.json');
 
 function truncate(text: string, max: number): string {
   return text.length > max ? `${text.slice(0, max)}…` : text;
 }
 
-function trackingModel(client: ModelClient): { model: ModelClient; usage: Usage } {
-  const usage: Usage = { calls: 0, inputTokens: 0, outputTokens: 0 };
-  const model: ModelClient = {
-    complete: async (request): Promise<ModelResponse> => {
-      const response = await client.complete(request);
-      usage.calls += 1;
-      usage.inputTokens += response.usage?.inputTokens ?? 0;
-      usage.outputTokens += response.usage?.outputTokens ?? 0;
-      return response;
-    },
-  };
-  return { model, usage };
-}
-
-interface Usage {
-  calls: number;
-  inputTokens: number;
-  outputTokens: number;
-}
-
-interface ExpressionPreview {
-  readonly expressionId: string;
-  readonly surfaceId: string;
-  readonly path: string;
-  readonly before: string;
-  readonly after: string;
-  readonly diff: string;
-}
-
 export async function runProposals(args: ProposalsArgs): Promise<number> {
-  const config = await resolveModelConfig(process.cwd());
-  if (!config) {
-    process.stderr.write(
-      [
-        'evogen proposals needs a model endpoint.',
-        '',
-        'Set these (process env or a .env.local file in the working directory):',
-        '  EVOGEN_MODEL_BASE_URL   root of a chat-completions compatible endpoint',
-        '  EVOGEN_MODEL_API_KEY    key for that endpoint',
-        '  EVOGEN_MODEL_ID         model id to call',
-        '',
-        'See .env.example in the repository root.',
-        '',
-      ].join('\n'),
-    );
-    return 2;
-  }
-
   const adapter = createCodexAdapter({
     ...(args.projectRoot ? { projectRoot: args.projectRoot } : {}),
     ...(args.sessionsRoot ? { sessionsRoot: args.sessionsRoot } : {}),
   });
-  const { model, usage } = trackingModel(new ChatCompletionsClient(config));
-  const store = args.save
-    ? new FileProposalStore(join(homedir(), '.evogen', 'store.json'))
-    : createMemoryStore();
-  const ctx: PipelineContext = {
-    sessions: adapter.sessions,
-    surfaces: adapter.surfaces,
-    store,
-    model,
-    clock: systemClock(),
-    ids: sequentialIds(),
-  };
 
-  const specs = await adapter.surfaces.list();
-  const digestBefore = new Map<string, string>();
-  for (const spec of specs) {
-    digestBefore.set(spec.id, spec.exists ? await adapter.surfaces.digest(spec) : '');
-  }
-
-  const pipeline = createEvolutionPipeline({
-    collect: { sessionLimit: Math.min(Math.max(1, args.limit), HARD_SESSION_CAP) },
-  });
-  const run = await runEvolution(pipeline, ctx);
-  const proposal: Proposal | undefined = run.proposal;
-
-  const digestAfter = new Map<string, string>();
-  for (const spec of specs) {
-    digestAfter.set(spec.id, spec.exists ? await adapter.surfaces.digest(spec) : '');
-  }
-  const unchanged = specs.every((spec) => digestBefore.get(spec.id) === digestAfter.get(spec.id));
-
-  const previews: ExpressionPreview[] = [];
-  if (proposal) {
-    for (const expression of proposal.expressions) {
-      const spec = specs.find((item) => item.id === expression.surfaceId);
-      if (!spec) continue;
-      const step = await adapter.surfaces.plan({
-        surface: spec,
-        op: expression.op,
-        payload: expression.payload,
-        changeId: 'preview',
-        expressionId: expression.id,
-        at: new Date(),
-      });
-      previews.push({
-        expressionId: expression.id,
-        surfaceId: expression.surfaceId,
-        path: spec.path,
-        before: step.before,
-        after: step.after,
-        diff: renderDiff(step.before, step.after),
-      });
+  let result;
+  try {
+    result = await runPipeline(adapter, {
+      sessionLimit: Math.min(Math.max(1, args.limit), HARD_SESSION_CAP),
+      ...(args.save ? { store: openStore(STORE_PATH) } : {}),
+    });
+  } catch (error) {
+    if (error instanceof MissingModelConfigError) {
+      process.stderr.write(
+        [
+          'evogen proposals needs a model endpoint.',
+          '',
+          'Set these (process env or a .env.local file in the working directory):',
+          '  EVOGEN_MODEL_BASE_URL   root of a chat-completions compatible endpoint',
+          '  EVOGEN_MODEL_API_KEY    key for that endpoint',
+          '  EVOGEN_MODEL_ID         model id to call',
+          '',
+          'See .env.example in the repository root.',
+          '',
+        ].join('\n'),
+      );
+      return 2;
     }
+    throw error;
   }
 
-  if (args.save && proposal) await store.saveProposal(proposal);
+  const { run, proposal, usage, surfacesUnchanged } = result;
+  const previews: ExpressionPreview[] = await buildPreviews(adapter.surfaces, proposal);
 
   if (args.json) {
     process.stdout.write(
@@ -146,9 +61,9 @@ export async function runProposals(args: ProposalsArgs): Promise<number> {
           run,
           proposal,
           previews,
-          integrity: { surfacesUnchanged: unchanged },
+          integrity: { surfacesUnchanged },
           usage,
-          ...(args.save ? { savedTo: join(homedir(), '.evogen', 'store.json') } : {}),
+          ...(args.save ? { savedTo: STORE_PATH } : {}),
         },
         null,
         2,
@@ -162,7 +77,6 @@ export async function runProposals(args: ProposalsArgs): Promise<number> {
   lines.push('');
   lines.push(`run           ${run.id}`);
   lines.push(`sessions      ${run.stages[0]?.itemCount ?? 0}`);
-  lines.push(`model         ${config.modelId}`);
   lines.push(`project root  ${adapter.projectRoot}`);
   lines.push('');
   lines.push('stages');
@@ -208,12 +122,12 @@ export async function runProposals(args: ProposalsArgs): Promise<number> {
   }
 
   lines.push(
-    `integrity  surfaces ${unchanged ? 'unchanged ✓ (nothing was written)' : 'CHANGED ✗ — this is a bug'}`,
+    `integrity  surfaces ${surfacesUnchanged ? 'unchanged ✓ (nothing was written)' : 'CHANGED ✗ — this is a bug'}`,
   );
   lines.push(
     `usage      ${usage.calls} call(s) · in ${usage.inputTokens} · out ${usage.outputTokens} tokens`,
   );
-  if (args.save) lines.push(`saved      ${join(homedir(), '.evogen', 'store.json')}`);
+  if (args.save) lines.push(`saved      ${STORE_PATH}`);
   lines.push('');
   process.stdout.write(`${lines.join('\n')}\n`);
   return 0;
