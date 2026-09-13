@@ -799,6 +799,8 @@ dependencies = [
 name = "evogen-studio"
 version = "0.0.1"
 dependencies = [
+ "serde",
+ "serde_json",
  "tauri",
  "tauri-build",
  "tauri-plugin-updater",
