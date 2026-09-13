@@ -6,7 +6,12 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["**", "!**/apps/desktop/src-tauri/target", "!**/apps/desktop/src-tauri/gen"]
+    "includes": [
+      "**",
+      "!**/apps/desktop/src-tauri",
+      "!**/apps/desktop/src-tauri/target",
+      "!**/apps/desktop/src-tauri/gen"
+    ]
   },
   "formatter": {
     "enabled": true,
