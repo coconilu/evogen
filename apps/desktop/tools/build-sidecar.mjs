@@ -16,6 +16,9 @@ const binaryPath = join(outDir, `evogen-cli${suffix}`);
 rmSync(outDir, { recursive: true, force: true });
 mkdirSync(outDir, { recursive: true });
 
+// 0. Make sure every workspace package is compiled (CI has no prior build).
+execSync('pnpm -r build', { cwd: repoRoot, stdio: 'inherit' });
+
 // 1. Bundle the CLI (pure JS, no native deps) into one CommonJS file.
 const bundle = join(outDir, 'evogen-cli.cjs');
 execSync(
