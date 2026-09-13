@@ -19,5 +19,6 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - name: kernel must stay dependency-free
-        run: node -e "const p=require('./packages/kernel/package.json');const d=p.dependencies||{};if(Object.keys(d).length){console.error('kernel 不能有运行时依赖:',d);process.exit(1)}"
+        run: pnpm check:kernel
+      - run: pnpm test
       - run: pnpm smoke

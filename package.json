@@ -12,10 +12,13 @@
   "scripts": {
     "build": "pnpm -r build",
     "smoke": "node packages/cli/dist/index.js status",
-    "status": "node packages/cli/dist/index.js status"
+    "status": "node packages/cli/dist/index.js status",
+    "test": "vitest run",
+    "check:kernel": "node scripts/check-kernel.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "vitest": "^5.0.0"
   }
 }
