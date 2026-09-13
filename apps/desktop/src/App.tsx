@@ -3,13 +3,15 @@ import { About } from './About';
 import { Dashboard } from './Dashboard';
 import { History } from './History';
 import { Proposals } from './Proposals';
+import { Settings } from './Settings';
 
-type Page = 'dashboard' | 'proposals' | 'history' | 'about';
+type Page = 'dashboard' | 'proposals' | 'history' | 'settings' | 'about';
 
 const NAV: ReadonlyArray<{ readonly id: Page; readonly label: string }> = [
   { id: 'dashboard', label: '仪表盘' },
   { id: 'proposals', label: '建议' },
   { id: 'history', label: '变更历史' },
+  { id: 'settings', label: '设置' },
   { id: 'about', label: '关于' },
 ];
 
@@ -45,7 +47,10 @@ export function App() {
         <footer className="sidebar-foot">本地运行 · 只读优先 · 写入需确认</footer>
       </nav>
       <main className="content">
-        {page === 'dashboard' && <Dashboard onOpenProposal={openProposal} />}
+        {page === 'dashboard' && (
+          <Dashboard onOpenProposal={openProposal} onOpenSettings={() => setPage('settings')} />
+        )}
+        {page === 'settings' && <Settings />}
         {page === 'proposals' && <Proposals openId={openProposalId} onOpenHandled={handleOpenHandled} />}
         {page === 'history' && <History />}
         {page === 'about' && <About />}

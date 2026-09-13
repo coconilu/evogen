@@ -106,3 +106,16 @@ export interface ApplyReport {
   readonly proposal: Proposal;
   readonly previews?: readonly Preview[];
 }
+
+export interface ModelConfigView {
+  readonly baseUrl: string;
+  readonly modelId: string;
+  readonly apiKeySet: boolean;
+  readonly source: 'env' | 'env-file' | 'user-config' | null;
+}
+
+export interface ConfigTestResult {
+  readonly ok: boolean;
+  readonly model?: string;
+  readonly error?: string;
+}

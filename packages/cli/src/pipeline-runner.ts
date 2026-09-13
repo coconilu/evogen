@@ -100,8 +100,8 @@ export async function runPipeline(hosts: RunnerHosts, options: RunnerOptions): P
 export class MissingModelConfigError extends Error {
   constructor() {
     super(
-      'model endpoint is not configured: set EVOGEN_MODEL_BASE_URL, EVOGEN_MODEL_API_KEY and ' +
-        'EVOGEN_MODEL_ID (process env or .env.local; see .env.example)',
+      '尚未配置模型：在 Evogen Studio 的「设置」页填写接口地址 / API Key / 模型 ID，' +
+        '或设置 EVOGEN_MODEL_BASE_URL、EVOGEN_MODEL_API_KEY、EVOGEN_MODEL_ID 环境变量',
     );
     this.name = 'MissingModelConfigError';
   }

@@ -3,6 +3,8 @@ import { createServer, type IncomingMessage, type Server, type ServerResponse } 
 import { type CodexAdapter, createCodexAdapter } from '@evogen/adapter-codex';
 import { type ProposalStatus, sequentialIds, systemClock } from '@evogen/kernel';
 import { applyProposal, revertChange } from '../apply.js';
+import { ChatCompletionsClient, resolveModelConfig } from '../config/model.js';
+import { readUserModelConfig, writeUserModelConfig } from '../config/user-config.js';
 import {
   MissingModelConfigError,
   openStore,
@@ -120,6 +122,66 @@ export async function runServe(args: ServeArgs): Promise<number> {
         path: spec.path,
         content: await adapter.surfaces.read(spec),
       });
+      return;
+    }
+    if (route === 'GET /api/config') {
+      // never returns the API key itself, only whether one is set
+      const config = await resolveModelConfig(process.cwd());
+      sendJson(
+        response,
+        200,
+        config
+          ? { baseUrl: config.baseUrl, modelId: config.modelId, apiKeySet: true, source: config.source }
+          : { baseUrl: '', modelId: '', apiKeySet: false, source: null },
+      );
+      return;
+    }
+    if (route === 'POST /api/config') {
+      const body = await readJson(request);
+      const baseUrl = typeof body['baseUrl'] === 'string' ? body['baseUrl'].trim() : '';
+      const modelId = typeof body['modelId'] === 'string' ? body['modelId'].trim() : '';
+      const apiKey = typeof body['apiKey'] === 'string' ? body['apiKey'].trim() : '';
+      if (!baseUrl.startsWith('http')) {
+        sendJson(response, 400, { error: '接口地址必须以 http(s):// 开头' });
+        return;
+      }
+      if (!modelId) {
+        sendJson(response, 400, { error: '模型 ID 不能为空' });
+        return;
+      }
+      const existing = await readUserModelConfig();
+      const effectiveKey = apiKey || existing?.apiKey;
+      if (!effectiveKey) {
+        sendJson(response, 400, { error: 'API Key 不能为空' });
+        return;
+      }
+      await writeUserModelConfig({ baseUrl: baseUrl.replace(/\/+$/, ''), apiKey: effectiveKey, modelId });
+      sendJson(response, 200, {
+        baseUrl: baseUrl.replace(/\/+$/, ''),
+        modelId,
+        apiKeySet: true,
+        source: 'user-config',
+      });
+      return;
+    }
+    if (route === 'POST /api/config/test') {
+      const config = await resolveModelConfig(process.cwd());
+      if (!config) {
+        sendJson(response, 200, { ok: false, error: '尚未配置模型，请先保存配置' });
+        return;
+      }
+      try {
+        const probe = await new ChatCompletionsClient(config).complete({
+          prompt: '这是一次连通性测试，请只回复两个字：正常',
+          maxOutputTokens: 1024,
+        });
+        sendJson(response, 200, { ok: true, model: probe.model });
+      } catch (error) {
+        sendJson(response, 200, {
+          ok: false,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
       return;
     }
     if (route === 'POST /api/runs') {

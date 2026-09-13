@@ -1,5 +1,6 @@
 import type { ModelClient, ModelRequest, ModelResponse } from '@evogen/kernel';
 import { loadDotEnvLocal } from './env.js';
+import { readUserModelConfig } from './user-config.js';
 
 export interface ModelConfig {
   /** Root of a chat-completions compatible endpoint, e.g. https://host/v1 */
@@ -8,21 +9,41 @@ export interface ModelConfig {
   readonly modelId: string;
   readonly timeoutMs: number;
   readonly maxRetries: number;
+  /** Where this configuration came from: process env, .env.local, or the user config file. */
+  readonly source: 'env' | 'env-file' | 'user-config';
 }
 
 const DEFAULT_TIMEOUT_MS = 120_000;
 const DEFAULT_MAX_RETRIES = 2;
 
 /**
- * Resolution order: process env, then `.env.local` in `cwd`.
- * Required keys: EVOGEN_MODEL_BASE_URL, EVOGEN_MODEL_API_KEY, EVOGEN_MODEL_ID.
+ * Resolution order: process env, `.env.local` in `cwd`, then the user config
+ * file (~/.evogen/config.json) that the desktop console writes.
+ * Env keys: EVOGEN_MODEL_BASE_URL, EVOGEN_MODEL_API_KEY, EVOGEN_MODEL_ID.
  */
-export async function resolveModelConfig(cwd: string): Promise<ModelConfig | undefined> {
+export async function resolveModelConfig(
+  cwd: string,
+  options: { readonly userConfigPath?: string } = {},
+): Promise<ModelConfig | undefined> {
   const file = await loadDotEnvLocal(cwd);
   const get = (key: string): string | undefined => process.env[key] ?? file[key];
-  const baseUrl = get('EVOGEN_MODEL_BASE_URL');
-  const apiKey = get('EVOGEN_MODEL_API_KEY');
-  const modelId = get('EVOGEN_MODEL_ID');
+  const inEnv = ['EVOGEN_MODEL_BASE_URL', 'EVOGEN_MODEL_API_KEY', 'EVOGEN_MODEL_ID'].some(
+    (key) => process.env[key] !== undefined,
+  );
+  const fromFiles = inEnv ? 'env' : file['EVOGEN_MODEL_BASE_URL'] ? 'env-file' : undefined;
+  let baseUrl = get('EVOGEN_MODEL_BASE_URL');
+  let apiKey = get('EVOGEN_MODEL_API_KEY');
+  let modelId = get('EVOGEN_MODEL_ID');
+  let source: ModelConfig['source'] | undefined = fromFiles;
+  if (!baseUrl || !apiKey || !modelId) {
+    const user = await readUserModelConfig(options.userConfigPath);
+    if (user) {
+      baseUrl = baseUrl ?? user.baseUrl;
+      apiKey = apiKey ?? user.apiKey;
+      modelId = modelId ?? user.modelId;
+      source = source ?? 'user-config';
+    }
+  }
   if (!baseUrl || !apiKey || !modelId) return undefined;
   return {
     baseUrl: baseUrl.replace(/\/+$/, ''),
@@ -30,6 +51,7 @@ export async function resolveModelConfig(cwd: string): Promise<ModelConfig | und
     modelId,
     timeoutMs: positiveInt(get('EVOGEN_MODEL_TIMEOUT_MS'), DEFAULT_TIMEOUT_MS),
     maxRetries: positiveInt(get('EVOGEN_MODEL_MAX_RETRIES'), DEFAULT_MAX_RETRIES),
+    source: source ?? 'user-config',
   };
 }
 

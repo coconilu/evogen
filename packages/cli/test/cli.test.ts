@@ -122,6 +122,38 @@ describe('resolveModelConfig', () => {
       process.env = previous;
     }
   });
+
+  it('falls back to the user config file when env and .env.local have nothing', async () => {
+    const emptyDir = await mkdtemp(join(tmpdir(), 'evogen-env-'));
+    const userConfig = join(emptyDir, 'config.json');
+    await writeFile(
+      userConfig,
+      JSON.stringify({
+        model: { baseUrl: 'https://from-user-config/v1', apiKey: 'uc-key', modelId: 'uc-model' },
+      }),
+      'utf8',
+    );
+    const previous = { ...process.env };
+    try {
+      delete process.env.EVOGEN_MODEL_BASE_URL;
+      delete process.env.EVOGEN_MODEL_API_KEY;
+      delete process.env.EVOGEN_MODEL_ID;
+
+      const config = await resolveModelConfig(emptyDir, { userConfigPath: userConfig });
+      expect(config?.source).toBe('user-config');
+      expect(config?.baseUrl).toBe('https://from-user-config/v1');
+      expect(config?.apiKey).toBe('uc-key');
+
+      // env beats the user config file
+      process.env.EVOGEN_MODEL_ID = 'env-model';
+      const overridden = await resolveModelConfig(emptyDir, { userConfigPath: userConfig });
+      expect(overridden?.source).toBe('env');
+      expect(overridden?.modelId).toBe('env-model');
+      expect(overridden?.baseUrl).toBe('https://from-user-config/v1');
+    } finally {
+      process.env = previous;
+    }
+  });
 });
 
 describe('loadDotEnvLocal', () => {
