@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Gates kernel purity: empty dependencies, no node builtins, no adapters.
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 const root = process.cwd();

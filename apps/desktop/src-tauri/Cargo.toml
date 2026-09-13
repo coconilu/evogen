@@ -1,0 +1,18 @@
+[package]
+name = "evogen-studio"
+version = "0.0.1"
+description = "Desktop console for evogen"
+license = "MIT"
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-updater = "2"
+
+[profile.release]
+strip = true
+lto = true
+codegen-units = 1
