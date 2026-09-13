@@ -25,3 +25,6 @@ export {
   type StageRecord,
 } from './pipeline/pipeline.js';
 export { runEvolution } from './pipeline/run.js';
+export { createEvolutionPipeline, type PipelineOptions } from './pipeline/factory.js';
+
+export { systemClock, sequentialIds, createMemoryStore } from './runtime/defaults.js';
