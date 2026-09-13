@@ -51,7 +51,11 @@ for (const [dir, suffix, platform] of targets) {
   }
   platforms[platform] = {
     signature: pair.signature,
-    url: `https://github.com/${repo}/releases/download/${tag}/${encodeURIComponent(pair.file)}`,
+    // GitHub 上传资产时把文件名里的空格规范化为点（"Evogen Studio_…" ->
+    // "Evogen.Studio_…"），下载 URL 必须用点形式，否则 updater 下载 404。
+    url: `https://github.com/${repo}/releases/download/${tag}/${encodeURIComponent(
+      pair.file.replace(/ /g, '.'),
+    )}`,
   };
 }
 
