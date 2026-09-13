@@ -26,7 +26,7 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["nsis"],
+    "targets": ["nsis", "dmg"],
     "icon": ["icons/32x32.png", "icons/128x128.png", "icons/icon.ico"],
     "resources": {
       "resources/binaries/": "binaries/"
@@ -39,8 +39,8 @@
   },
   "plugins": {
     "updater": {
-      "endpoints": ["https://github.com/BayesWang/evogen/releases/latest/download/latest.json"],
-      "pubkey": "REPLACE_WITH_MINISIGN_PUBKEY_AT_FIRST_RELEASE"
+      "endpoints": ["https://github.com/coconilu/evogen/releases/latest/download/latest.json"],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IENGMDRGMDgzNDAwN0NGMzAKUldRd3p3ZEFnL0FFendhU0ozMlBnOE9SNU1XcU9URy9wTXZiNlFITGNYOHJVRE5jbnRreVNDR1oK"
     }
   }
 }

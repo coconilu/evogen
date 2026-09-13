@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
   pull_request:
+  # the release pipeline explicitly dispatches CI on the merge commit
+  workflow_dispatch:
 
 jobs:
   node:
@@ -22,6 +24,8 @@ jobs:
       - name: kernel must stay dependency-free
         run: pnpm check:kernel
       - run: pnpm test
+      - name: release orchestration tests
+        run: pnpm test:release
       - run: pnpm smoke
 
   desktop:

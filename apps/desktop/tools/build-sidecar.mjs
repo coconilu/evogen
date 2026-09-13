@@ -44,7 +44,7 @@ const postject = [
   'NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2',
   '--overwrite',
 ];
-execSync(`pnpm exec ${postject.join(' ')}`, { stdio: 'inherit' });
+execSync(`pnpm exec ${postject.join(' ')}`, { cwd: repoRoot, stdio: 'inherit' });
 if (process.platform === 'darwin') {
   execSync(`codesign --sign - "${binaryPath}"`, { stdio: 'inherit' });
 }
