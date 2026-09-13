@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.0.3（2026-09-13）
+
+- feat(studio): 设置页与进化环路可视化——回应「模型配置不可见、环路看不出来」的反馈
+- docs: M4 关账——一键发版 v0.0.2 在线验收通过
+
 ## v0.0.2（2026-09-13）
 
 - fix(release): build-sidecar 先 pnpm -r build 保证 dist 存在
