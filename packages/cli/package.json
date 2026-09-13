@@ -1,0 +1,21 @@
+{
+  "name": "@evogen/cli",
+  "version": "0.0.1",
+  "description": "The evogen command line: wires the kernel to a host adapter.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "bin": {
+    "evogen": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "@evogen/adapter-codex": "workspace:*",
+    "@evogen/kernel": "workspace:*"
+  }
+}

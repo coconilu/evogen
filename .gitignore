@@ -1,0 +1,10 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.evogen/
+coverage/
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.log
