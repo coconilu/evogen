@@ -36,15 +36,36 @@ SessionSource ──list/read──▶ 会话（RawSession）
 
 写盘不在流水线里。流水线只产出 `Proposal`，落盘由 `SurfaceStore` 执行，且必须经过确认。
 
+## 写入闭环（M2）
+
+两段式：建议以 `draft` 状态保存，`approve` 后才允许 `apply`。apply 时逐个表达式
+`plan`（纯函数算 diff）→ `apply`（重读文件校验漂移后写入），每一笔都产生
+`ChangeRecord`（前后摘要）；单条失败不回滚其余条目（`partially_applied`），可重试。
+`revert <change-id>` 只删除该 change 的标记块，变更记录保留并标记 `[reverted]`。
+
+## 客户端形态：CLI 与桌面控制台
+
+内核与适配器被两个前端复用，业务逻辑只有一份：
+
+| 客户端 | 形态 | 与内核的关系 |
+| --- | --- | --- |
+| `packages/cli` | 命令行：`status` / `proposals` / `approve` / `apply` / `revert` / `changes` | 直接组装 `PipelineContext` |
+| `apps/desktop` | Tauri v2 桌面应用（Evogen Studio） | 经 `evogen serve` 的本地 API 访问 |
+
+`evogen serve` 只绑定 `127.0.0.1` 随机端口，token 鉴权，REST + SSE（阶段进度实时推送），
+stdout 输出单行握手 `EVOGEN_READY port=… token=… pid=…`。桌面壳（薄 Rust 层）负责拉起
+sidecar（发布形态是 Node SEA 编译的独立二进制，开发形态由 `EVOGEN_SIDECAR_CMD` 指定）、
+解析握手、退出时清理进程树；前端只做展示与确认交互。
+
 ## 端口（内核只认这些）
 
 | 端口 | 谁实现 | 内核不知道的事 |
 | --- | --- | --- |
 | `SessionSource` | 适配器 | 会话日志在哪、什么格式 |
 | `SurfaceStore` | 适配器 | 指令文件叫什么、怎么写入、怎么撤销 |
-| `ModelClient` | 调用方注入 | 用哪个模型、怎么鉴权 |
-| `ProposalStore` | 内核的通用实现或调用方 | 建议和变更记录存在哪 |
-| `Clock` / `IdFactory` | 通用实现 | 便于测试时替换 |
+| `ModelClient` | 调用方注入（cli 内置通用 chat-completions 实现） | 用哪个端点、怎么鉴权 |
+| `ProposalStore` | 内核的内存实现；cli 的 JSON 文件实现 | 建议和变更记录存在哪 |
+| `Clock` / `IdFactory` | 内核的通用实现 | 便于测试时替换 |
 
 ## 为什么这样切
 

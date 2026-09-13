@@ -38,18 +38,30 @@ node packages/cli/dist/index.js status
 - 对 ≥10 个真实会话运行，产出 ≥3 条建议，且每条都能点回原始会话片段
 - 运行前后对所有可进化面做摘要比对，必须完全一致
 
-## M2 写入闭环
+## M2 写入闭环（已完成，2026-09-13）
+
+验收记录：CLI 端到端——`approve` → `apply` 后文件仅新增一个带标记的块（写入前后 sha-256：
+2d44df09 → 1702ad16），`revert` 后摘要精确回到写入前（2d44df09）；手工篡改 plan→apply
+窗口内文件内容时 apply 拒绝覆盖并保持可重试（自动化测试覆盖）；部分失败时已写入部分保留、
+失败项逐条报告（partially_applied）。另有一次真实场景验证：apply 到 `agents.user` 的
+变更通过 `changes` / `revert` 精确恢复原摘要（e5d5b573），未损伤文件其它内容。
+
+## M4 桌面控制台（进行中）
 
 交付：
 
-- 两段式：`evogen approve <proposal>` 后才允许 `evogen apply <proposal>`
-- 变更记录（含写入前后摘要）与 `evogen revert <change-id>`
-- 部分失败时不提交整体状态，逐条可续做
+- `apps/desktop`：Tauri v2 薄 Rust 壳 + React 前端，sidecar 方式复用 `evogen serve`
+  （127.0.0.1 随机端口 + token 鉴权，stdout 单行握手）
+- 四个页面：仪表盘（可进化面/会话概况/发起只读进化）、建议（列表/详情/diff/批准/应用）、
+  变更历史（逐笔撤销）、关于（版本与更新入口）
+- 发布基建：SEA 独立 sidecar 二进制、NSIS 安装器钩子、updater 插件接线、CI 双 job 门禁
 
 验收：
 
-- 写入只落在标记块内；`revert` 后文件摘要回到写入前
-- 手工篡改文件后再次运行，能检测到漂移并拒绝覆盖
+- `tauri dev` 跑通：Rust 壳拉起 sidecar 并解析握手行，前端经 token 访问本地 API（已验证）
+- `tauri build` 产出含 sidecar 的 NSIS 安装包（已验证）
+- 一键发版 workflow（版本自动化 + 双平台签名构建 + latest.json）落地并完成一次真实发版
+  （待办：编排脚本移植自参考实现；minisign 密钥与仓库 Secrets 需人工创建）
 
 ## M3 适配器协议
 
