@@ -1,9 +1,11 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { About } from './About';
 import { Dashboard } from './Dashboard';
 import { History } from './History';
 import { Proposals } from './Proposals';
 import { Settings } from './Settings';
+import { UpdateBanner } from './UpdateBanner';
+import { startUpdateLoop } from './update';
 
 type Page = 'dashboard' | 'proposals' | 'history' | 'settings' | 'about';
 
@@ -19,6 +21,10 @@ export function App() {
   const [page, setPage] = useState<Page>('dashboard');
   const [openProposalId, setOpenProposalId] = useState<string | undefined>();
 
+  useEffect(() => {
+    startUpdateLoop();
+  }, []);
+
   const openProposal = useCallback((id: string) => {
     setOpenProposalId(id);
     setPage('proposals');
@@ -26,35 +32,38 @@ export function App() {
   const handleOpenHandled = useCallback(() => setOpenProposalId(undefined), []);
 
   return (
-    <div className="app">
-      <nav className="sidebar">
-        <div className="brand">
-          <span className="brand-mark" />
-          <span>
-            Evogen <small>Studio</small>
-          </span>
-        </div>
-        {NAV.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            className={`nav-item ${page === item.id ? 'active' : ''}`}
-            onClick={() => setPage(item.id)}
-          >
-            {item.label}
-          </button>
-        ))}
-        <footer className="sidebar-foot">本地运行 · 只读优先 · 写入需确认</footer>
-      </nav>
-      <main className="content">
-        {page === 'dashboard' && (
-          <Dashboard onOpenProposal={openProposal} onOpenSettings={() => setPage('settings')} />
-        )}
-        {page === 'settings' && <Settings />}
-        {page === 'proposals' && <Proposals openId={openProposalId} onOpenHandled={handleOpenHandled} />}
-        {page === 'history' && <History />}
-        {page === 'about' && <About />}
-      </main>
+    <div className="app-root">
+      <UpdateBanner />
+      <div className="app">
+        <nav className="sidebar">
+          <div className="brand">
+            <span className="brand-mark" />
+            <span>
+              Evogen <small>Studio</small>
+            </span>
+          </div>
+          {NAV.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className={`nav-item ${page === item.id ? 'active' : ''}`}
+              onClick={() => setPage(item.id)}
+            >
+              {item.label}
+            </button>
+          ))}
+          <footer className="sidebar-foot">本地运行 · 只读优先 · 写入需确认</footer>
+        </nav>
+        <main className="content">
+          {page === 'dashboard' && (
+            <Dashboard onOpenProposal={openProposal} onOpenSettings={() => setPage('settings')} />
+          )}
+          {page === 'settings' && <Settings />}
+          {page === 'proposals' && <Proposals openId={openProposalId} onOpenHandled={handleOpenHandled} />}
+          {page === 'history' && <History />}
+          {page === 'about' && <About />}
+        </main>
+      </div>
     </div>
   );
 }

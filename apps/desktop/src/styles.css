@@ -25,10 +25,47 @@ body {
   line-height: 1.6;
 }
 
+.app-root {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
 .app {
   display: grid;
   grid-template-columns: 220px 1fr;
-  height: 100vh;
+  flex: 1;
+  min-height: 0;
+}
+
+.update-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 16px;
+  background: rgba(79, 214, 168, 0.12);
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
+  flex-wrap: wrap;
+}
+
+.update-banner.installing {
+  display: block;
+}
+
+.update-progress {
+  margin-top: 6px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--bg-hover);
+  overflow: hidden;
+}
+
+.update-progress-bar {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.3s ease;
 }
 
 .sidebar {
