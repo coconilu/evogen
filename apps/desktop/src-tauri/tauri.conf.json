@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Evogen Studio",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "identifier": "io.github.bayeswang.evogen-studio",
   "build": {
     "beforeDevCommand": "pnpm dev",
@@ -26,8 +26,15 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["nsis", "dmg"],
-    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/icon.ico"],
+    "targets": [
+      "nsis",
+      "dmg"
+    ],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/icon.ico"
+    ],
     "resources": {
       "resources/binaries/": "binaries/"
     },
@@ -39,7 +46,9 @@
   },
   "plugins": {
     "updater": {
-      "endpoints": ["https://github.com/coconilu/evogen/releases/latest/download/latest.json"],
+      "endpoints": [
+        "https://github.com/coconilu/evogen/releases/latest/download/latest.json"
+      ],
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IENGMDRGMDgzNDAwN0NGMzAKUldRd3p3ZEFnL0FFendhU0ozMlBnOE9SNU1XcU9URy9wTXZiNlFITGNYOHJVRE5jbnRreVNDR1oK"
     }
   }
