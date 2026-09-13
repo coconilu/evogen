@@ -1,32 +1,41 @@
 #!/usr/bin/env node
 import { createCodexAdapter } from '@evogen/adapter-codex';
+import { runProposals } from './commands/proposals.js';
 
 const USAGE = `evogen — session-driven self-evolution for AI coding agents
 
 Usage:
   evogen status [--json] [--all] [--project <dir>] [--sessions <dir>]
+  evogen proposals [--json] [--save] [--limit <n>] [--project <dir>] [--sessions <dir>]
   evogen help
   evogen version
 
 Commands:
-  status    Read-only. Lists the surfaces this runtime can evolve and how many
-            sessions are available. Writes nothing, opens no network.
+  status      Read-only. Lists the surfaces this runtime can evolve and how many
+              sessions are available. Writes nothing, opens no network.
+  proposals   Runs the evolution pipeline (read-only): sessions -> evidence ->
+              signals -> proposal -> critique, then prints diff previews.
+              Needs a model endpoint via EVOGEN_MODEL_* (see .env.example).
+              Writes nothing unless --save is given.
 
 Options:
   --json             Machine-readable output.
   --all              List every skill surface instead of the first few.
   --project <dir>    Project root that owns the instruction file (default: cwd).
   --sessions <dir>   Session log directory (default: the host's own store).
+  --limit <n>        How many of the newest sessions to consider (default 20).
+  --save             Persist the proposal to the local store (~/.evogen).
 
 What is not here yet:
-  M1 adds \`evogen proposals\` (evidence -> signals -> proposals, dry-run diffs).
-  M2 adds \`evogen apply\` / \`evogen revert\`. See docs/roadmap.md.
+  M2 adds \`evogen apply\` / \`evogen revert\`. A desktop console follows. See docs/roadmap.md.
 `;
 
 interface Args {
   readonly command: string;
   readonly json: boolean;
   readonly all: boolean;
+  readonly save: boolean;
+  readonly limit: number;
   readonly projectRoot: string | undefined;
   readonly sessionsRoot: string | undefined;
 }
@@ -35,6 +44,8 @@ function parseArgs(argv: readonly string[]): Args {
   const positional: string[] = [];
   let json = false;
   let all = false;
+  let save = false;
+  let limit = 20;
   let projectRoot: string | undefined;
   let sessionsRoot: string | undefined;
 
@@ -44,6 +55,12 @@ function parseArgs(argv: readonly string[]): Args {
       json = true;
     } else if (arg === '--all') {
       all = true;
+    } else if (arg === '--save') {
+      save = true;
+    } else if (arg === '--limit') {
+      const value = Number.parseInt(argv[i + 1] ?? '', 10);
+      if (Number.isFinite(value) && value > 0) limit = value;
+      i += 1;
     } else if (arg === '--project') {
       projectRoot = argv[i + 1];
       i += 1;
@@ -57,7 +74,7 @@ function parseArgs(argv: readonly string[]): Args {
     }
   }
 
-  return { command: positional[0] ?? 'status', json, all, projectRoot, sessionsRoot };
+  return { command: positional[0] ?? 'status', json, all, save, limit, projectRoot, sessionsRoot };
 }
 
 function formatBytes(bytes: number): string {
@@ -163,6 +180,14 @@ async function main(): Promise<number> {
   switch (args.command) {
     case 'status':
       return status(args);
+    case 'proposals':
+      return runProposals({
+        json: args.json,
+        ...(args.projectRoot ? { projectRoot: args.projectRoot } : {}),
+        ...(args.sessionsRoot ? { sessionsRoot: args.sessionsRoot } : {}),
+        limit: args.limit,
+        save: args.save,
+      });
     case 'help':
       process.stdout.write(USAGE);
       return 0;
