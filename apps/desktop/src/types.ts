@@ -82,3 +82,27 @@ export interface RunPayload {
   readonly surfacesUnchanged?: boolean;
   readonly error?: string;
 }
+
+export interface ChangeRecord {
+  readonly changeId: string;
+  readonly proposalId?: string;
+  readonly expressionId: string;
+  readonly surfaceId: string;
+  readonly path: string;
+  readonly op: SurfaceOp;
+  readonly beforeDigest: string;
+  readonly afterDigest: string;
+  readonly appliedAt: string;
+}
+
+export interface ChangesPayload {
+  readonly changes: readonly ChangeRecord[];
+  readonly reverted: readonly string[];
+}
+
+export interface ApplyReport {
+  readonly records: readonly ChangeRecord[];
+  readonly failures: ReadonlyArray<{ readonly expressionId: string; readonly reason: string }>;
+  readonly proposal: Proposal;
+  readonly previews?: readonly Preview[];
+}

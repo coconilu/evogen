@@ -8,4 +8,7 @@ export interface ProposalStore {
   getProposal(id: string): Promise<Proposal | undefined>;
   appendChange(change: ChangeRecord): Promise<void>;
   listChanges(): Promise<readonly ChangeRecord[]>;
+  /** Change records stay on file after revert; this marks them as undone. */
+  isChangeReverted(changeId: string): Promise<boolean>;
+  markChangeReverted(changeId: string): Promise<void>;
 }

@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import type { Preview, Proposal, RunPayload, StatusPayload } from './types';
+import type { ApplyReport, ChangesPayload, Preview, Proposal, RunPayload, StatusPayload } from './types';
 
 /**
  * In the Tauri shell the origin and token come from the Rust side (parsed
@@ -55,4 +55,11 @@ export const api = {
   proposals: (): Promise<{ proposals: readonly Proposal[] }> => request('/api/proposals'),
   proposal: (id: string): Promise<{ proposal: Proposal; previews: readonly Preview[] }> =>
     request(`/api/proposals/${encodeURIComponent(id)}`),
+  setProposalStatus: (id: string, action: 'approve' | 'reject'): Promise<{ proposal: Proposal }> =>
+    request(`/api/proposals/${encodeURIComponent(id)}/${action}`, { method: 'POST' }),
+  applyProposal: (id: string): Promise<ApplyReport> =>
+    request(`/api/proposals/${encodeURIComponent(id)}/apply`, { method: 'POST' }),
+  changes: (): Promise<ChangesPayload> => request('/api/changes'),
+  revertChange: (changeId: string): Promise<{ ok: boolean; changeId: string }> =>
+    request(`/api/changes/${encodeURIComponent(changeId)}/revert`, { method: 'POST' }),
 };

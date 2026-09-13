@@ -1,6 +1,8 @@
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import { type CodexAdapter, createCodexAdapter } from '@evogen/adapter-codex';
+import { type ProposalStatus, sequentialIds, systemClock } from '@evogen/kernel';
+import { applyProposal, revertChange } from '../apply.js';
 import {
   MissingModelConfigError,
   openStore,
@@ -160,6 +162,71 @@ export async function runServe(args: ServeArgs): Promise<number> {
       sendJson(response, 200, { proposal, previews: await buildPreviews(adapter.surfaces, proposal) });
       return;
     }
+
+    // --- write loop (M2): two-phase apply and exact revert -----------------
+    const statusMatch = /^POST \/api\/proposals\/([^/]+)\/(approve|reject)$/.exec(route);
+    if (statusMatch) {
+      const id = decodeURIComponent(statusMatch[1] ?? '');
+      const action = statusMatch[2];
+      const proposal = await store.getProposal(id);
+      if (!proposal) {
+        sendJson(response, 404, { error: `unknown proposal: ${id}` });
+        return;
+      }
+      if (proposal.status !== 'draft') {
+        sendJson(response, 409, {
+          error: `proposal status is "${proposal.status}", only "draft" can be ${action}d`,
+        });
+        return;
+      }
+      const next: ProposalStatus = action === 'approve' ? 'approved' : 'rejected';
+      const updated = { ...proposal, status: next };
+      await store.saveProposal(updated);
+      sendJson(response, 200, { proposal: updated });
+      return;
+    }
+    const applyMatch = /^POST \/api\/proposals\/([^/]+)\/apply$/.exec(route);
+    if (applyMatch) {
+      const id = decodeURIComponent(applyMatch[1] ?? '');
+      const proposal = await store.getProposal(id);
+      if (!proposal) {
+        sendJson(response, 404, { error: `unknown proposal: ${id}` });
+        return;
+      }
+      try {
+        const report = await applyProposal(adapter.surfaces, store, sequentialIds(), systemClock(), proposal);
+        sendJson(response, 200, {
+          records: report.records,
+          failures: report.failures,
+          proposal: report.proposal,
+          previews: await buildPreviews(adapter.surfaces, report.proposal),
+        });
+      } catch (error) {
+        sendJson(response, 409, { error: error instanceof Error ? error.message : String(error) });
+      }
+      return;
+    }
+    if (route === 'GET /api/changes') {
+      const changes = await store.listChanges();
+      const reverted = [];
+      for (const change of changes) {
+        if (await store.isChangeReverted(change.changeId)) reverted.push(change.changeId);
+      }
+      sendJson(response, 200, { changes, reverted });
+      return;
+    }
+    const revertMatch = /^POST \/api\/changes\/([^/]+)\/revert$/.exec(route);
+    if (revertMatch) {
+      const changeId = decodeURIComponent(revertMatch[1] ?? '');
+      try {
+        await revertChange(adapter.surfaces, store, changeId);
+        sendJson(response, 200, { ok: true, changeId });
+      } catch (error) {
+        sendJson(response, 409, { error: error instanceof Error ? error.message : String(error) });
+      }
+      return;
+    }
+
     if (route === 'GET /api/events') {
       response.writeHead(200, {
         ...corsHeaders(),

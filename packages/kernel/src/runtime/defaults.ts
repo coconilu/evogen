@@ -28,11 +28,12 @@ export function sequentialIds(): IdFactory {
 interface MemoryState {
   readonly proposals: Map<string, Proposal>;
   readonly changes: ChangeRecord[];
+  readonly reverted: Set<string>;
 }
 
 /** In-memory store, the default for read-only runs and for tests. */
 export function createMemoryStore(): ProposalStore {
-  const state: MemoryState = { proposals: new Map(), changes: [] };
+  const state: MemoryState = { proposals: new Map(), changes: [], reverted: new Set() };
   return {
     async saveProposal(proposal: Proposal): Promise<void> {
       state.proposals.set(proposal.id, proposal);
@@ -49,6 +50,12 @@ export function createMemoryStore(): ProposalStore {
     },
     async listChanges(): Promise<readonly ChangeRecord[]> {
       return [...state.changes];
+    },
+    async isChangeReverted(changeId: string): Promise<boolean> {
+      return state.reverted.has(changeId);
+    },
+    async markChangeReverted(changeId: string): Promise<void> {
+      state.reverted.add(changeId);
     },
   };
 }

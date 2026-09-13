@@ -361,3 +361,17 @@ body {
   flex-direction: column;
   gap: 12px;
 }
+
+.confirm-box {
+  border: 1px solid rgba(240, 180, 92, 0.45);
+  background: rgba(240, 180, 92, 0.08);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.confirm-box p {
+  margin: 0;
+}

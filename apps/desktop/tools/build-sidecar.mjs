@@ -35,7 +35,15 @@ copyFileSync(process.execPath, binaryPath);
 if (process.platform === 'darwin') {
   execSync(`codesign --remove-signature "${binaryPath}"`, { stdio: 'inherit' });
 }
-const postject = ['postject', `"${binaryPath}"`, 'NODE_SEA_BLOB', `"${blob}"`, '--sentinel-fuse', 'NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2', '--overwrite'];
+const postject = [
+  'postject',
+  `"${binaryPath}"`,
+  'NODE_SEA_BLOB',
+  `"${blob}"`,
+  '--sentinel-fuse',
+  'NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2',
+  '--overwrite',
+];
 execSync(`pnpm exec ${postject.join(' ')}`, { stdio: 'inherit' });
 if (process.platform === 'darwin') {
   execSync(`codesign --sign - "${binaryPath}"`, { stdio: 'inherit' });

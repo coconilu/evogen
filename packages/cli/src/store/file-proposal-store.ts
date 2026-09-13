@@ -6,10 +6,11 @@ interface StoreFile {
   readonly version: 1;
   proposals: Proposal[];
   changes: ChangeRecord[];
+  revertedChanges: string[];
 }
 
 function emptyFile(): StoreFile {
-  return { version: 1, proposals: [], changes: [] };
+  return { version: 1, proposals: [], changes: [], revertedChanges: [] };
 }
 
 /**
@@ -30,6 +31,7 @@ export class FileProposalStore implements ProposalStore {
         version: 1,
         proposals: Array.isArray(parsed.proposals) ? parsed.proposals : [],
         changes: Array.isArray(parsed.changes) ? parsed.changes : [],
+        revertedChanges: Array.isArray(parsed.revertedChanges) ? parsed.revertedChanges : [],
       };
     } catch {
       this.file = emptyFile();
@@ -72,5 +74,16 @@ export class FileProposalStore implements ProposalStore {
   async listChanges(): Promise<readonly ChangeRecord[]> {
     const file = await this.load();
     return [...file.changes].sort((a, b) => a.appliedAt.localeCompare(b.appliedAt));
+  }
+
+  async isChangeReverted(changeId: string): Promise<boolean> {
+    const file = await this.load();
+    return file.revertedChanges.includes(changeId);
+  }
+
+  async markChangeReverted(changeId: string): Promise<void> {
+    const file = await this.load();
+    if (!file.revertedChanges.includes(changeId)) file.revertedChanges.push(changeId);
+    await this.persist(file);
   }
 }

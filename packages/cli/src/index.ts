@@ -1,13 +1,38 @@
 #!/usr/bin/env node
 import { createCodexAdapter } from '@evogen/adapter-codex';
+import { runApply, runApprove, runChanges, runReject, runRevert } from './commands/lifecycle.js';
 import { runProposals } from './commands/proposals.js';
 import { runServe } from './commands/serve.js';
+
+function runLifecycle(
+  command: 'approve' | 'reject' | 'apply' | 'revert',
+  args: {
+    readonly id: string;
+    readonly storePath?: string;
+    readonly projectRoot?: string;
+    readonly sessionsRoot?: string;
+  },
+): Promise<number> {
+  switch (command) {
+    case 'approve':
+      return runApprove(args);
+    case 'reject':
+      return runReject(args);
+    case 'apply':
+      return runApply(args);
+    case 'revert':
+      return runRevert(args);
+  }
+}
 
 const USAGE = `evogen — session-driven self-evolution for AI coding agents
 
 Usage:
   evogen status [--json] [--all] [--project <dir>] [--sessions <dir>]
   evogen proposals [--json] [--save] [--limit <n>] [--project <dir>] [--sessions <dir>]
+  evogen approve|reject|apply <proposal-id>
+  evogen changes
+  evogen revert <change-id>
   evogen serve [--port <n>] [--project <dir>] [--sessions <dir>]
   evogen help
   evogen version
@@ -27,22 +52,32 @@ Options:
   --json             Machine-readable output.
   --all              List every skill surface instead of the first few.
   --project <dir>    Project root that owns the instruction file (default: cwd).
+                     Only affects project-level surfaces (e.g. agents.project);
+                     user-level surfaces always point at the host's own home.
   --sessions <dir>   Session log directory (default: the host's own store).
   --limit <n>        How many of the newest sessions to consider (default 20).
   --save             Persist the proposal to the local store (~/.evogen).
+  --store <path>     Store file location (default ~/.evogen/store.json).
   --port <n>         TCP port for serve (default: a random free port).
 
-What is not here yet:
-  M2 adds \`evogen apply\` / \`evogen revert\`. See docs/roadmap.md.
+Write loop (two-phase, changes land inside marked blocks only):
+  evogen approve <proposal-id>   Mark a draft proposal as approved.
+  evogen reject <proposal-id>    Mark a draft proposal as rejected.
+  evogen apply <proposal-id>     Write the approved proposal's expressions.
+                                 Prints every target path it writes to.
+  evogen changes                 List recorded changes (with revert state).
+  evogen revert <change-id>      Remove exactly that change's marked block.
 `;
 
 interface Args {
   readonly command: string;
+  readonly id: string | undefined;
   readonly json: boolean;
   readonly all: boolean;
   readonly save: boolean;
   readonly limit: number;
   readonly port: number | undefined;
+  readonly storePath: string | undefined;
   readonly projectRoot: string | undefined;
   readonly sessionsRoot: string | undefined;
 }
@@ -54,6 +89,7 @@ function parseArgs(argv: readonly string[]): Args {
   let save = false;
   let limit = 20;
   let port: number | undefined;
+  let storePath: string | undefined;
   let projectRoot: string | undefined;
   let sessionsRoot: string | undefined;
 
@@ -73,6 +109,9 @@ function parseArgs(argv: readonly string[]): Args {
       const value = Number.parseInt(argv[i + 1] ?? '', 10);
       if (Number.isFinite(value) && value > 0) port = value;
       i += 1;
+    } else if (arg === '--store') {
+      storePath = argv[i + 1];
+      i += 1;
     } else if (arg === '--project') {
       projectRoot = argv[i + 1];
       i += 1;
@@ -86,7 +125,18 @@ function parseArgs(argv: readonly string[]): Args {
     }
   }
 
-  return { command: positional[0] ?? 'status', json, all, save, limit, port, projectRoot, sessionsRoot };
+  return {
+    command: positional[0] ?? 'status',
+    id: positional[1],
+    json,
+    all,
+    save,
+    limit,
+    port,
+    storePath,
+    projectRoot,
+    sessionsRoot,
+  };
 }
 
 function formatBytes(bytes: number): string {
@@ -181,7 +231,7 @@ async function status(args: Args): Promise<number> {
   lines.push(`  ${pad('newest turns', 16)}${newestTurns}`);
   lines.push('');
   lines.push('read-only command: nothing was written, nothing was sent anywhere.');
-  lines.push('next: M1 adds `evogen proposals`. See docs/roadmap.md.');
+  lines.push('next: `evogen proposals` runs the read-only analysis; see docs/roadmap.md.');
 
   process.stdout.write(`${lines.join('\n')}\n`);
   return 0;
@@ -203,6 +253,27 @@ async function main(): Promise<number> {
     case 'serve':
       return runServe({
         ...(args.port !== undefined ? { port: args.port } : {}),
+        ...(args.projectRoot ? { projectRoot: args.projectRoot } : {}),
+        ...(args.sessionsRoot ? { sessionsRoot: args.sessionsRoot } : {}),
+      });
+    case 'approve':
+    case 'reject':
+    case 'apply':
+    case 'revert':
+      if (!args.id) {
+        process.stderr.write(`usage: evogen ${args.command} <id>\n`);
+        return 1;
+      }
+      return runLifecycle(args.command, {
+        id: args.id,
+        ...(args.storePath ? { storePath: args.storePath } : {}),
+        ...(args.projectRoot ? { projectRoot: args.projectRoot } : {}),
+        ...(args.sessionsRoot ? { sessionsRoot: args.sessionsRoot } : {}),
+      });
+    case 'changes':
+      return runChanges({
+        id: '',
+        ...(args.storePath ? { storePath: args.storePath } : {}),
         ...(args.projectRoot ? { projectRoot: args.projectRoot } : {}),
         ...(args.sessionsRoot ? { sessionsRoot: args.sessionsRoot } : {}),
       });

@@ -25,11 +25,12 @@ export async function runProposals(args: ProposalsArgs): Promise<number> {
     ...(args.sessionsRoot ? { sessionsRoot: args.sessionsRoot } : {}),
   });
 
+  const store = args.save ? openStore(STORE_PATH) : undefined;
   let result: RunResult;
   try {
     result = await runPipeline(adapter, {
       sessionLimit: Math.min(Math.max(1, args.limit), HARD_SESSION_CAP),
-      ...(args.save ? { store: openStore(STORE_PATH) } : {}),
+      ...(store ? { store } : {}),
     });
   } catch (error) {
     if (error instanceof MissingModelConfigError) {
@@ -52,6 +53,7 @@ export async function runProposals(args: ProposalsArgs): Promise<number> {
   }
 
   const { run, proposal, usage, surfacesUnchanged } = result;
+  if (store && proposal) await store.saveProposal(proposal);
   const previews: ExpressionPreview[] = await buildPreviews(adapter.surfaces, proposal);
 
   if (args.json) {
