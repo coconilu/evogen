@@ -1,16 +1,16 @@
-import { describe, expect, it } from 'vitest';
 import {
   createEvolutionPipeline,
   createMemoryStore,
-  runEvolution,
-  sequentialIds,
-  systemClock,
   type ModelRequest,
   type PipelineContext,
   type RawSession,
+  runEvolution,
   type SessionSource,
   type SurfaceStore,
+  sequentialIds,
+  systemClock,
 } from '@evogen/kernel';
+import { describe, expect, it } from 'vitest';
 
 /** Scripted model: the first matching route wins. */
 function fakeModel(routes: ReadonlyArray<{ match: string; respond: (prompt: string) => string }>) {
@@ -86,12 +86,16 @@ const DISTILL_ROUTE = {
   respond: (prompt: string) => {
     if (prompt.includes('会话 S1')) {
       return JSON.stringify({
-        evidence: [{ kind: 'correction', quote: 'use pnpm instead of npm', note: '包管理器用 pnpm', confidence: 0.9 }],
+        evidence: [
+          { kind: 'correction', quote: 'use pnpm instead of npm', note: '包管理器用 pnpm', confidence: 0.9 },
+        ],
       });
     }
     if (prompt.includes('会话 S2')) {
       return JSON.stringify({
-        evidence: [{ kind: 'correction', quote: 'use pnpm instead of npm', note: '包管理器用 pnpm', confidence: 0.9 }],
+        evidence: [
+          { kind: 'correction', quote: 'use pnpm instead of npm', note: '包管理器用 pnpm', confidence: 0.9 },
+        ],
       });
     }
     return '{"evidence":[]}';
@@ -123,7 +127,10 @@ const CRITIQUE_OK = {
   respond: () => JSON.stringify({ risk: 0.1, confidence: 0.9, notes: 'ok', drop: [], revise: [] }),
 };
 
-function makeCtx(model: ReturnType<typeof fakeModel>, surfaceContent = '# existing rules\n- keep tests green'): PipelineContext {
+function makeCtx(
+  model: ReturnType<typeof fakeModel>,
+  surfaceContent = '# existing rules\n- keep tests green',
+): PipelineContext {
   return {
     sessions: fakeSessions([session('S1', '会话 S1: please use pnpm instead of npm')]),
     surfaces: fakeSurfaces([{ id: 'agents.project', content: surfaceContent }]),
@@ -169,7 +176,13 @@ describe('createEvolutionPipeline end to end (fake model)', () => {
         JSON.stringify({
           title: 't',
           expressions: [
-            { surfaceId: 'agents.project', op: 'append', content: 'keep tests green', rationale: '', evidenceIds: [] },
+            {
+              surfaceId: 'agents.project',
+              op: 'append',
+              content: 'keep tests green',
+              rationale: '',
+              evidenceIds: [],
+            },
             { surfaceId: 'agents.project', op: 'replace', content: '替换', rationale: '', evidenceIds: [] },
             { surfaceId: 'unknown-surface', op: 'append', content: 'abc', rationale: '', evidenceIds: [] },
           ],
@@ -199,8 +212,7 @@ describe('createEvolutionPipeline end to end (fake model)', () => {
   it('applies critique clamping (risk 5 -> 1, confidence -1 -> 0)', async () => {
     const critique = {
       match: '自检者',
-      respond: () =>
-        JSON.stringify({ risk: 5, confidence: -1, notes: 'clamped', drop: [], revise: [] }),
+      respond: () => JSON.stringify({ risk: 5, confidence: -1, notes: 'clamped', drop: [], revise: [] }),
     };
     const model = fakeModel([DISTILL_ROUTE, PROPOSE_ROUTE, critique]);
     const run = await runEvolution(createEvolutionPipeline(), makeCtx(model));

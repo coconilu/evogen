@@ -14,11 +14,20 @@
     "smoke": "node packages/cli/dist/index.js status",
     "status": "node packages/cli/dist/index.js status",
     "test": "vitest run",
-    "check:kernel": "node scripts/check-kernel.mjs"
+    "check:kernel": "node scripts/check-kernel.mjs",
+    "lint": "biome ci .",
+    "lint:fix": "biome check --write ."
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.5.13",
     "@types/node": "^24.3.0",
     "typescript": "^5.9.2",
     "vitest": "^5.0.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@tauri-apps/cli",
+      "esbuild"
+    ]
   }
 }

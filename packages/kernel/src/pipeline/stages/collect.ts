@@ -1,6 +1,6 @@
 import type { RawSession } from '../../domain/session.js';
-import type { Stage } from '../pipeline.js';
 import type { PipelineContext } from '../context.js';
+import type { Stage } from '../pipeline.js';
 
 export interface CollectOptions {
   /** How many of the newest sessions to pull in. Default 20. */

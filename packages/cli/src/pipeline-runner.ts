@@ -1,22 +1,22 @@
+import { homedir } from 'node:os';
+import { join } from 'node:path';
+import type { ProposalStore } from '@evogen/kernel';
 import {
   createEvolutionPipeline,
   createMemoryStore,
-  runEvolution,
-  sequentialIds,
-  systemClock,
   type ModelClient,
   type ModelResponse,
   type PipelineContext,
-  type Proposal,
   type PipelineRun,
-  type SurfaceStore,
+  type Proposal,
+  runEvolution,
   type SessionSource,
+  type SurfaceStore,
+  sequentialIds,
+  systemClock,
 } from '@evogen/kernel';
-import type { ProposalStore } from '@evogen/kernel';
 import { ChatCompletionsClient, resolveModelConfig } from './config/model.js';
 import { FileProposalStore } from './store/file-proposal-store.js';
-import { homedir } from 'node:os';
-import { join } from 'node:path';
 
 export interface StageEvent {
   readonly name: string;
@@ -51,10 +51,7 @@ export interface RunnerOptions {
 export const DEFAULT_STORE_PATH = join(homedir(), '.evogen', 'store.json');
 
 /** Runs the read-only pipeline against the given hosts, tracking usage and integrity. */
-export async function runPipeline(
-  hosts: RunnerHosts,
-  options: RunnerOptions,
-): Promise<RunResult> {
+export async function runPipeline(hosts: RunnerHosts, options: RunnerOptions): Promise<RunResult> {
   const config = await resolveModelConfig(process.cwd());
   if (!config) {
     throw new MissingModelConfigError();

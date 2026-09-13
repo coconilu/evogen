@@ -1,8 +1,6 @@
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
-import type { ChangeRecord } from '@evogen/kernel';
-import type { Proposal, ProposalStatus } from '@evogen/kernel';
-import type { ProposalStore } from '@evogen/kernel';
+import type { ChangeRecord, Proposal, ProposalStatus, ProposalStore } from '@evogen/kernel';
 
 interface StoreFile {
   readonly version: 1;

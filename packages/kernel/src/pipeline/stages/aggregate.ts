@@ -1,6 +1,6 @@
 import type { Evidence, Signal } from '../../domain/evidence.js';
-import type { Stage } from '../pipeline.js';
 import type { PipelineContext } from '../context.js';
+import type { Stage } from '../pipeline.js';
 import { similarity } from './internal/text.js';
 
 export interface AggregateOptions {
@@ -18,7 +18,9 @@ interface Cluster {
  * text is similar enough collapses into one signal; the weight is the number
  * of distinct supporting sessions.
  */
-export function createAggregateStage(options: AggregateOptions = {}): Stage<readonly Evidence[], readonly Signal[]> {
+export function createAggregateStage(
+  options: AggregateOptions = {},
+): Stage<readonly Evidence[], readonly Signal[]> {
   const threshold = Math.min(1, Math.max(0, options.similarityThreshold ?? 0.35));
   return {
     name: 'aggregate',
@@ -28,14 +30,19 @@ export function createAggregateStage(options: AggregateOptions = {}): Stage<read
         const target = clusters.find(
           (cluster) =>
             cluster.kind === item.kind &&
-            cluster.members.some((member) => similarity(member.quote + ' ' + member.note, item.quote + ' ' + item.note) >= threshold),
+            cluster.members.some(
+              (member) =>
+                similarity(member.quote + ' ' + member.note, item.quote + ' ' + item.note) >= threshold,
+            ),
         );
         if (target) target.members.push(item);
         else clusters.push({ kind: item.kind, members: [item] });
       }
 
       const signals: Signal[] = clusters.map((cluster) => {
-        const representative = cluster.members.reduce((best, item) => (item.note.length > best.note.length ? item : best));
+        const representative = cluster.members.reduce((best, item) =>
+          item.note.length > best.note.length ? item : best,
+        );
         const sessionIds = new Set(cluster.members.map((member) => member.sessionId));
         return {
           id: ctx.ids.next('sig'),

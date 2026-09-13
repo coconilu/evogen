@@ -15,7 +15,5 @@ export function renderTranscript(session: RawSession): string {
     }
   }
   const text = lines.join('\n');
-  return text.length > MAX_TRANSCRIPT_CHARS
-    ? `${text.slice(0, MAX_TRANSCRIPT_CHARS)}\n…[clipped]`
-    : text;
+  return text.length > MAX_TRANSCRIPT_CHARS ? `${text.slice(0, MAX_TRANSCRIPT_CHARS)}\n…[clipped]` : text;
 }

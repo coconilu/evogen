@@ -53,7 +53,9 @@ function at<T>(items: readonly T[], index: number): T {
 }
 
 function lcsTable(a: readonly string[], b: readonly string[]): readonly (readonly number[])[] {
-  const table: number[][] = Array.from({ length: a.length + 1 }, () => new Array<number>(b.length + 1).fill(0));
+  const table: number[][] = Array.from({ length: a.length + 1 }, () =>
+    new Array<number>(b.length + 1).fill(0),
+  );
   for (let i = a.length - 1; i >= 0; i -= 1) {
     for (let j = b.length - 1; j >= 0; j -= 1) {
       table[i]![j] =

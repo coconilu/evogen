@@ -17,7 +17,9 @@ export function sequentialIds(): IdFactory {
   return {
     next: (prefix: string) => {
       counter += 1;
-      const random = Math.floor(Math.random() * 36 ** 6).toString(36).padStart(6, '0');
+      const random = Math.floor(Math.random() * 36 ** 6)
+        .toString(36)
+        .padStart(6, '0');
       return `${prefix}_${counter.toString(36)}_${random}`;
     },
   };

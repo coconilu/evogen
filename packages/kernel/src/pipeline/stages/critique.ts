@@ -1,6 +1,6 @@
 import type { Expression, Proposal } from '../../domain/proposal.js';
-import type { Stage } from '../pipeline.js';
 import type { PipelineContext } from '../context.js';
+import type { Stage } from '../pipeline.js';
 import { asNumber, asRecord, asString, asStringArray, extractJson } from './internal/json.js';
 import { clamp01, containsNormalized } from './internal/text.js';
 

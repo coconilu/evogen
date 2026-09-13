@@ -1,12 +1,12 @@
+import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
-import { randomBytes, timingSafeEqual, createHash } from 'node:crypto';
-import { createCodexAdapter, type CodexAdapter } from '@evogen/adapter-codex';
+import { type CodexAdapter, createCodexAdapter } from '@evogen/adapter-codex';
 import {
   MissingModelConfigError,
   openStore,
+  type RunResult,
   resolveModelConfigOrThrow,
   runPipeline,
-  type RunResult,
   type StageEvent,
 } from '../pipeline-runner.js';
 import { buildPreviews, type ExpressionPreview } from '../previews.js';
@@ -112,7 +112,12 @@ export async function runServe(args: ServeArgs): Promise<number> {
         sendJson(response, 404, { error: `unknown surface: ${id}` });
         return;
       }
-      sendJson(response, 200, { id: spec.id, kind: spec.kind, path: spec.path, content: await adapter.surfaces.read(spec) });
+      sendJson(response, 200, {
+        id: spec.id,
+        kind: spec.kind,
+        path: spec.path,
+        content: await adapter.surfaces.read(spec),
+      });
       return;
     }
     if (route === 'POST /api/runs') {
@@ -255,7 +260,7 @@ function corsHeaders(): Record<string, string> {
 
 function authorized(request: IncomingMessage, url: URL, tokenHash: Buffer): boolean {
   const header = request.headers['authorization'] ?? '';
-  const presented = header.startsWith('Bearer ') ? header.slice(7) : url.searchParams.get('token') ?? '';
+  const presented = header.startsWith('Bearer ') ? header.slice(7) : (url.searchParams.get('token') ?? '');
   if (presented.length === 0) return false;
   const presentedHash = createHash('sha256').update(presented).digest();
   return timingSafeEqual(presentedHash, tokenHash);

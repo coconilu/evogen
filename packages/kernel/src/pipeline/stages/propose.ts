@@ -1,8 +1,8 @@
 import type { Signal } from '../../domain/evidence.js';
 import type { Expression, Proposal } from '../../domain/proposal.js';
 import type { SurfaceSpec } from '../../domain/surface.js';
-import type { Stage } from '../pipeline.js';
 import type { PipelineContext } from '../context.js';
+import type { Stage } from '../pipeline.js';
 import { asRecord, asString, asStringArray, extractJson } from './internal/json.js';
 import { containsNormalized, normalizeText } from './internal/text.js';
 
@@ -37,7 +37,10 @@ function userPrompt(signals: readonly Signal[], surfaces: readonly SurfaceConten
     2,
   );
   const surfaceBlock = surfaces
-    .map((surface) => `<surface id="${surface.spec.id}" path="${surface.spec.path}">\n${surface.content}\n</surface>`)
+    .map(
+      (surface) =>
+        `<surface id="${surface.spec.id}" path="${surface.spec.path}">\n${surface.content}\n</surface>`,
+    )
     .join('\n');
   return `下面是归并后的信号（来自多个会话的证据）与现有可进化面的内容。请提出建议。
 
@@ -121,8 +124,7 @@ export function createProposeStage(): Stage<readonly Signal[], Proposal> {
         }
       }
 
-      const validEvidence = (ids: readonly string[]) =>
-        ids.filter((id) => knownEvidence.has(id));
+      const validEvidence = (ids: readonly string[]) => ids.filter((id) => knownEvidence.has(id));
 
       const expressions: Expression[] = [];
       const seenContent = new Set<string>();

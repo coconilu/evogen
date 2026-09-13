@@ -1,7 +1,7 @@
-import { createCodexAdapter } from '@evogen/adapter-codex';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-import { MissingModelConfigError, openStore, runPipeline } from '../pipeline-runner.js';
+import { createCodexAdapter } from '@evogen/adapter-codex';
+import { MissingModelConfigError, openStore, type RunResult, runPipeline } from '../pipeline-runner.js';
 import { buildPreviews, type ExpressionPreview } from '../previews.js';
 
 export interface ProposalsArgs {
@@ -25,7 +25,7 @@ export async function runProposals(args: ProposalsArgs): Promise<number> {
     ...(args.sessionsRoot ? { sessionsRoot: args.sessionsRoot } : {}),
   });
 
-  let result;
+  let result: RunResult;
   try {
     result = await runPipeline(adapter, {
       sessionLimit: Math.min(Math.max(1, args.limit), HARD_SESSION_CAP),
@@ -81,7 +81,9 @@ export async function runProposals(args: ProposalsArgs): Promise<number> {
   lines.push('');
   lines.push('stages');
   for (const stage of run.stages) {
-    lines.push(`  ${stage.name.padEnd(10)} ${String(stage.itemCount).padStart(4)} items  ${String(stage.durationMs).padStart(7)} ms`);
+    lines.push(
+      `  ${stage.name.padEnd(10)} ${String(stage.itemCount).padStart(4)} items  ${String(stage.durationMs).padStart(7)} ms`,
+    );
   }
   lines.push('');
 

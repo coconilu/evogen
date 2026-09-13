@@ -3,8 +3,8 @@ import type { Proposal } from '../domain/proposal.js';
 import type { RawSession } from '../domain/session.js';
 import type { PipelineContext } from './context.js';
 import {
-  KernelNotReadyError,
   type EvolutionPipeline,
+  KernelNotReadyError,
   type PipelineRun,
   type StageRecord,
 } from './pipeline.js';

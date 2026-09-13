@@ -1,7 +1,7 @@
 import type { EvolutionPipeline } from './pipeline.js';
-import type { CollectOptions } from './stages/collect.js';
 import type { AggregateOptions } from './stages/aggregate.js';
 import { createAggregateStage } from './stages/aggregate.js';
+import type { CollectOptions } from './stages/collect.js';
 import { createCollectStage } from './stages/collect.js';
 import { createCritiqueStage } from './stages/critique.js';
 import { createDistillStage } from './stages/distill.js';

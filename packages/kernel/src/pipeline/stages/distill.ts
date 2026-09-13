@@ -3,7 +3,7 @@ import type { RawSession } from '../../domain/session.js';
 import type { PipelineContext } from '../context.js';
 import type { Stage } from '../pipeline.js';
 import { asNumber, asRecord, asString, extractJson } from './internal/json.js';
-import { containsNormalized, normalizeText, clamp01 } from './internal/text.js';
+import { clamp01, containsNormalized, normalizeText } from './internal/text.js';
 import { renderTranscript } from './internal/transcript.js';
 
 const KINDS: readonly EvidenceKind[] = ['correction', 'repetition', 'failure', 'preference', 'win'];

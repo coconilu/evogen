@@ -2,9 +2,9 @@ import { mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { loadDotEnvLocal } from '../src/config/env.js';
 import { ChatCompletionsClient, resolveModelConfig } from '../src/config/model.js';
 import { renderDiff } from '../src/diff.js';
-import { loadDotEnvLocal } from '../src/config/env.js';
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -61,10 +61,9 @@ describe('ChatCompletionsClient', () => {
     const response = await client.complete({ prompt: 'x', responseFormat: 'json' });
     expect(response.text).toBe('{"ok":true}');
     expect(fetchMock).toHaveBeenCalledTimes(2);
-    const secondBody = JSON.parse(String((fetchMock.mock.calls[1] as [string, RequestInit])[1].body)) as Record<
-      string,
-      unknown
-    >;
+    const secondBody = JSON.parse(
+      String((fetchMock.mock.calls[1] as [string, RequestInit])[1].body),
+    ) as Record<string, unknown>;
     expect(secondBody['response_format']).toBeUndefined();
   });
 
@@ -97,7 +96,12 @@ describe('resolveModelConfig', () => {
     const dir = await mkdtemp(join(tmpdir(), 'evogen-env-'));
     await writeFile(
       join(dir, '.env.local'),
-      ['EVOGEN_MODEL_BASE_URL=https://from-file/v1', 'EVOGEN_MODEL_API_KEY=file-key', 'EVOGEN_MODEL_ID=file-model', ''].join('\n'),
+      [
+        'EVOGEN_MODEL_BASE_URL=https://from-file/v1',
+        'EVOGEN_MODEL_API_KEY=file-key',
+        'EVOGEN_MODEL_ID=file-model',
+        '',
+      ].join('\n'),
       'utf8',
     );
     const previous = { ...process.env };

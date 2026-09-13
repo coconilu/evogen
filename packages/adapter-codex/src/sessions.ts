@@ -1,6 +1,6 @@
 import { readdir, readFile, stat } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { RawSession, SessionMeta, SessionRef, SessionTurn, SessionSource } from '@evogen/kernel';
+import type { RawSession, SessionMeta, SessionRef, SessionSource, SessionTurn } from '@evogen/kernel';
 
 /** Keep reasoned-over text bounded: per turn, and per session. */
 const MAX_TEXT_CHARS = 1500;

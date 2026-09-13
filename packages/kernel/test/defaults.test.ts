@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
 import { createMemoryStore, sequentialIds, systemClock } from '@evogen/kernel';
+import { describe, expect, it } from 'vitest';
 
 describe('sequentialIds', () => {
   it('produces unique ids with the requested prefix', () => {

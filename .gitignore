@@ -11,3 +11,10 @@ Thumbs.db
 .idea/
 .vscode/
 *.log
+
+# rust / tauri
+apps/desktop/src-tauri/target/
+apps/desktop/src-tauri/gen/
+
+# agent workspace
+.zcode/

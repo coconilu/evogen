@@ -2,9 +2,9 @@ import { codexHome, defaultProjectRoot, defaultSessionsRoot } from './paths.js';
 import { CodexSessionSource } from './sessions.js';
 import { CodexSurfaceStore } from './surfaces.js';
 
-export { CodexSessionSource, type CodexSessionSourceOptions } from './sessions.js';
-export { CodexSurfaceStore, changeMarker, type CodexSurfaceStoreOptions } from './surfaces.js';
 export { codexHome, defaultProjectRoot, defaultSessionsRoot } from './paths.js';
+export { CodexSessionSource, type CodexSessionSourceOptions } from './sessions.js';
+export { CodexSurfaceStore, type CodexSurfaceStoreOptions, changeMarker } from './surfaces.js';
 
 export interface CodexAdapterOptions {
   readonly projectRoot?: string;
