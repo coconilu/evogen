@@ -46,7 +46,7 @@ node packages/cli/dist/index.js status
 失败项逐条报告（partially_applied）。另有一次真实场景验证：apply 到 `agents.user` 的
 变更通过 `changes` / `revert` 精确恢复原摘要（e5d5b573），未损伤文件其它内容。
 
-## M4 桌面控制台（进行中）
+## M4 桌面控制台（已完成，2026-09-13）
 
 交付：
 
@@ -54,14 +54,19 @@ node packages/cli/dist/index.js status
   （127.0.0.1 随机端口 + token 鉴权，stdout 单行握手）
 - 四个页面：仪表盘（可进化面/会话概况/发起只读进化）、建议（列表/详情/diff/批准/应用）、
   变更历史（逐笔撤销）、关于（版本与更新入口）
-- 发布基建：SEA 独立 sidecar 二进制、NSIS 安装器钩子、updater 插件接线、CI 双 job 门禁
+- 发布基建：SEA 独立 sidecar 二进制、NSIS 安装器钩子、updater 插件接线、CI 双 job 门禁、
+  一键发版（版本自动 PR + 自动审批 + 固定 SHA 双平台签名构建 + latest.json）
 
-验收：
+验收记录：
 
-- `tauri dev` 跑通：Rust 壳拉起 sidecar 并解析握手行，前端经 token 访问本地 API（已验证）
-- `tauri build` 产出含 sidecar 的 NSIS 安装包（已验证）
-- 一键发版 workflow（版本自动化 + 双平台签名构建 + latest.json）落地并完成一次真实发版
-  （待办：编排脚本移植自参考实现；minisign 密钥与仓库 Secrets 需人工创建）
+- `tauri dev` 跑通：Rust 壳拉起 sidecar 并解析握手行，前端经 token 访问本地 API
+- `tauri build` 产出含 sidecar 的 NSIS 安装包
+- 真实发版 v0.0.2 在线完成：版本 PR 自动创建/审批/合并（#4），双平台签名构建成功
+  （Windows NSIS + macOS DMG/app.tar.gz），latest.json 携带双平台签名发布，
+  tag/构建/发布固定同一提交（6d45cfa）；编排回归测试 27 例随 CI 门禁运行
+- 首次发版过程中修复的实战问题：Actions 无创建 PR 权限（仓库设置 API 开启）、
+  CI 缺 dist 构建（build-sidecar 先 pnpm -r build）、macOS updater 产物需 app target、
+  私钥 Secret 需为纯 base64 行（整文件含注释头无法解码）
 
 ## M3 适配器协议
 
