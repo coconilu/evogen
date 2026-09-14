@@ -55,6 +55,7 @@ packages/
 docs/
   architecture.md  边界与端口设计
   roadmap.md       里程碑与验收标准
+  usage.md         使用文档（CLI 与桌面端完整操作手册）
 ```
 
 ---
@@ -84,6 +85,8 @@ node packages/cli/dist/index.js status
 ```
 
 `status` 是只读命令，会列出：本机被识别为「可进化面」的指令文件、它们的摘要、以及可读取的会话数量。它不会联网，也不会修改任何文件。
+
+完整的操作手册——包括三段式安全模型、全部 CLI 命令的参数与输出示例、模型配置的三级回退、以及 Evogen Studio 桌面端的各页面说明——见 **[docs/usage.md](docs/usage.md)**。
 
 ---
 
