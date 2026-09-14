@@ -278,11 +278,11 @@ evogen changes [--store <path>]
 ```text
 chg_7f3a2b  agents.project · append  /home/you/my-project/AGENTS.md
   applied 2026-09-14T06:30:00.000Z  digest 9c41e0… → 5d88a1…
-chg_91cc04  agents.user · append  /home/you/.codex/AGENTS.md
+chg_91cc04 [reverted]  agents.user · append  /home/you/.codex/AGENTS.md
   applied 2026-09-14T06:30:01.000Z  digest 77b2af… → c019de…
 ```
 
-已撤销的记录行尾带 `[reverted]`。没有记录时输出 `no changes recorded.`。
+已撤销的记录会在 changeId 后带 `[reverted]` 标记。没有记录时输出 `no changes recorded.`。
 
 ### evogen revert
 
@@ -310,7 +310,7 @@ changeId 不存在、已撤销过、或该变更不含标记块（replace 操作
 
 `proposals` 与 serve 的进化运行都需要调用一个模型端点。evogen 使用**通用的 chat-completions 兼容 HTTP 协议**（`POST {baseUrl}/chat/completions`），不绑定任何模型厂商；接口地址、密钥、模型 ID 全部来自配置。
 
-配置按以下顺序解析，**前面的来源整体优先**（不是逐字段合并回退到后面——只要环境变量里出现任意一个 `EVOGEN_MODEL_*` 键，就走环境变量这一级）：
+配置的解析是**逐字段回退**的：接口地址、API Key、模型 ID 三个必需字段各自独立取值，每一级只补当前还缺的字段。三个来源按以下优先级参与回退：
 
 | 优先级 | 来源 | 说明 |
 | --- | --- | --- |
@@ -318,10 +318,12 @@ changeId 不存在、已撤销过、或该变更不含标记块（replace 操作
 | 2 | 当前工作目录的 `.env.local` | 从仓库根目录的 `.env.example` 复制改名并填入真实值；该文件已被 gitignore，**不要提交真实密钥** |
 | 3 | 用户级 `~/.evogen/config.json` | Evogen Studio 设置页保存的配置，是桌面端的默认路径 |
 
-补充规则：
+具体规则：
 
+- **同名键之间**，进程环境变量压过 `.env.local`：每个键先取 `process.env`，取不到才看 `.env.local`——shell 里临时导出的值不会被文件悄悄覆盖。
+- **字段缺失时逐级补齐**：某个必需字段在前两级都取不到，就用用户级 `config.json` 的对应字段补上；三级都凑不齐该字段才算缺失。
+- **来源标签**（Studio 设置页显示的「密钥来源」）：只要进程环境里出现任意一个 `EVOGEN_MODEL_*` 键，标签显示「环境变量」；否则 `.env.local` 里配了接口地址就显示「.env.local 文件」；都没配但用户级配置可用时显示「本页保存的配置」。
 - `.env.local` 支持**行内注释**：未加引号的值后可以用 ` # 注释` 结尾，例如 `EVOGEN_MODEL_ID=my-model # 本机部署的模型服务`。加引号（单双皆可）的值按整体取值，不会截断。
-- 进程环境变量永远压过 `.env.local` 中同名键——shell 里临时导出的值不会被文件悄悄覆盖。
 - 三个必需键凑不齐时视为「未配置」：CLI 会以退出码 2 打印配置指引；Studio 会引导你去设置页。
 - 可选调节：`EVOGEN_MODEL_TIMEOUT_MS`（单次请求超时，默认 120000 毫秒）、`EVOGEN_MODEL_MAX_RETRIES`（失败重试次数，默认 2，只对限流/服务端错误/超时类错误重试）。
 - 密钥安全：serve 的配置接口只返回「是否已设置密钥」，永远不回传密钥本身；错误信息中的密钥会被自动打码。
@@ -423,7 +425,7 @@ CLI 的写入闭环只作用于存储里的建议。用 `evogen proposals --save
 **apply 后建议状态是 partially_applied**
 部分表达式成功、部分失败。成功的已各留变更记录可单独 revert；失败原因打印在 stderr（或 Studio 的写入结果清单里），修复后重新处理。
 
-**revert 报 change … is not wrapped in a marker block**
+**revert 报 change chg_x used op "replace" and is not wrapped in a marker block**
 这条变更用的是 replace 操作（替换已有文本），没有标记块可删。按当初评审过的 diff 手工还原文件。
 
 **serve 返回 401 unauthorized**
