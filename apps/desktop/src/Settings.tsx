@@ -103,7 +103,7 @@ export function Settings() {
             <input
               className="input wide"
               value={modelId}
-              placeholder="例如 deepseek-flash"
+              placeholder="例如 my-model-name"
               onChange={(event) => setModelId(event.target.value)}
             />
           </label>
